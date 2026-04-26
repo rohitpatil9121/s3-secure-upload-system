@@ -1,35 +1,40 @@
 import json
 import boto3
+import uuid
+from datetime import datetime
 
 s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb')
 
 BUCKET_NAME = "rohit-file-upload-unique123"
+TABLE_NAME = "file_metadata"
+
+table = dynamodb.Table(TABLE_NAME)
 
 def lambda_handler(event, context):
     try:
-        # Get query params
-        params = event.get("queryStringParameters")
-
-        if not params or "file_id" not in params:
-            return {
-                "statusCode": 400,
-                "headers": {
-                    "Access-Control-Allow-Origin": "*"
-                },
-                "body": "file_id is required"
-            }
-
-        file_id = params["file_id"]
+        file_id = str(uuid.uuid4())
         file_name = f"{file_id}.jpg"
 
-        # Generate download URL
-        download_url = s3.generate_presigned_url(
-            'get_object',
+        # Generate upload URL
+        upload_url = s3.generate_presigned_url(
+            'put_object',
             Params={
                 'Bucket': BUCKET_NAME,
-                'Key': file_name
+                'Key': file_name,
+                'ContentType': 'image/jpeg'
             },
             ExpiresIn=300
+        )
+
+        # Save metadata in DynamoDB
+        table.put_item(
+            Item={
+                "file_id": file_id,
+                "file_name": file_name,
+                "status": "pending",
+                "created_at": datetime.utcnow().isoformat()
+            }
         )
 
         return {
@@ -40,7 +45,8 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Methods": "*"
             },
             "body": json.dumps({
-                "downloadURL": download_url
+                "uploadURL": upload_url,
+                "file_id": file_id
             })
         }
 
