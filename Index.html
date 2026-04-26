@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud File System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+}
+
+.header {
+    text-align: center;
+    padding: 30px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+/* Upload box */
+.file-upload {
+    border: 2px dashed rgba(255,255,255,0.3);
+    padding: 25px;
+    text-align: center;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.file-upload:hover {
+    border-color: #00c6ff;
+}
+
+.file-upload input {
+    display: none;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    margin-top: 10px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* File cards */
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 15px;
+}
+
+.file-card {
+    padding: 15px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.1);
+}
+
+.status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.uploaded { background: #00c853; }
+.pending { background: #ffab00; }
+
+/* Progress */
+.progress {
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: #00e5ff;
+    width: 0%;
+    border-radius: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>🚀 Cloud File System</h1>
+</div>
+
+<div class="container">
+
+<!-- Upload -->
+<div class="card">
+    <label class="file-upload">
+        📂 Click to choose file
+        <input type="file" id="fileInput">
+    </label>
+
+    <button onclick="uploadFile()">Upload File</button>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+</div>
+
+<!-- Download -->
+<div class="card">
+    <input type="text" id="fileIdInput" placeholder="Enter file ID">
+    <button onclick="downloadFile()">Get Download Link</button>
+</div>
+
+<!-- File List -->
+<div class="card">
+    <button onclick="loadFiles()">📦 Load Files</button>
+    <div id="fileList" class="file-grid"></div>
+</div>
+
+</div>
+
+<script>
+const API_BASE = "https://fmfniocwaa.execute-api.us-east-1.amazonaws.com/prod";
+
+// 🚀 Upload
+async function uploadFile() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) return alert("Select file");
+
+    const bar = document.getElementById("progressBar");
+
+    const res = await fetch(`${API_BASE}/upload`, { method: "POST" });
+    const data = await res.json();
+    const parsed = JSON.parse(data.body);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", parsed.uploadURL);
+
+    xhr.upload.onprogress = (e) => {
+        const percent = (e.loaded / e.total) * 100;
+        bar.style.width = percent + "%";
+    };
+
+    xhr.onload = () => {
+        alert("Upload successful 🚀");
+        document.getElementById("fileIdInput").value = parsed.file_id;
+    };
+
+    xhr.send(file);
+}
+
+// ⬇️ Download (manual)
+async function downloadFile() {
+    const id = document.getElementById("fileIdInput").value;
+
+    const res = await fetch(`${API_BASE}/download?file_id=${id}`);
+    const data = await res.json();
+
+    // ✅ FIXED (no JSON.parse)
+    window.open(data.downloadURL);
+}
+
+// 📂 Load files
+async function loadFiles() {
+    const res = await fetch(`${API_BASE}/files`);
+    const data = await res.json();
+
+    const container = document.getElementById("fileList");
+    container.innerHTML = "";
+
+    data.reverse().forEach(file => {
+        const statusClass = file.status === "uploaded" ? "uploaded" : "pending";
+
+        container.innerHTML += `
+            <div class="file-card">
+                <b>${file.file_name}</b><br><br>
+                <span class="status ${statusClass}">
+                    ${file.status}
+                </span><br><br>
+                <button onclick="getDownload('${file.file_id}')">
+                    Download
+                </button>
+            </div>
+        `;
+    });
+}
+
+// 🔗 Download from list
+async function getDownload(id) {
+    const res = await fetch(`${API_BASE}/download?file_id=${id}`);
+    const data = await res.json();
+
+    // ✅ FIXED
+    window.open(data.downloadURL);
+}
+</script>
+
+</body>
+</html>
