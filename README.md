@@ -30,6 +30,7 @@ This project demonstrates real-world cloud architecture using pre-signed URLs fo
 
 ## 🏗️ Architecture
 
+```mermaid
 graph TD
     A[Frontend UI] --> B[API Gateway]
     B --> C[Lambda Upload]
@@ -37,15 +38,16 @@ graph TD
     C --> E[S3 Bucket]
     C --> F[DynamoDB]
     D --> E
+```
+## 🛠️ Tech Stack
 
-    🛠️ Tech Stack
-Layer	Technology
-Frontend	HTML, CSS, JS
-Backend	AWS Lambda
-API Layer	API Gateway
-Storage	Amazon S3
-Database	DynamoDB
-
+| Layer      | Technology         |
+|-----------|-------------------|
+| Frontend  | HTML, CSS, JS     |
+| Backend   | AWS Lambda        |
+| API Layer | API Gateway       |
+| Storage   | Amazon S3         |
+| Database  | DynamoDB          |
 
 📤 Upload
 
@@ -67,8 +69,9 @@ Returns secure download link.
 {
   "downloadURL": "..."
 }
-📂 Project Structure
+## 📂 Project Structure
 
+```
 s3-secure-upload-system/
 │
 ├── lambda/
@@ -79,9 +82,9 @@ s3-secure-upload-system/
 │   └── index.html
 │
 ├── screenshots/
-│
 ├── README.md
 └── .gitignore
+```
 
 
 📸 Screenshots
