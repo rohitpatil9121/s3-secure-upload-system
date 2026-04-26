@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cloud File System</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.container {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    padding: 30px;
+    border-radius: 20px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+h2 {
+    margin-bottom: 20px;
+}
+
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+}
+
+input {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+input::placeholder {
+    color: #ddd;
+}
+
+button {
+    background: #00c6ff;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0072ff;
+    color: white;
+}
+
+.result {
+    margin-top: 20px;
+    word-wrap: break-word;
+}
+
+a {
+    color: #00ffcc;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🚀 Cloud File Upload</h2>
+
+    <input type="file" id="fileInput">
+
+    <button onclick="uploadFile()">Upload File</button>
+
+    <hr style="margin:20px 0; border:1px solid rgba(255,255,255,0.2);">
+
+    <input type="text" id="fileIdInput" placeholder="Enter file_id">
+
+    <button onclick="downloadFile()">Get Download Link</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+const API_BASE = "https://fmfniocwaa.execute-api.us-east-1.amazonaws.com/prod";
+
+async function uploadFile() {
+    const file = document.getElementById("fileInput").files[0];
+
+    if (!file) {
+        alert("Select a file first!");
+        return;
+    }
+
+    document.getElementById("result").innerHTML = "Uploading... ⏳";
+
+    const res = await fetch(`${API_BASE}/upload`, { method: "POST" });
+    const data = await res.json();
+
+    await fetch(data.uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file
+    });
+
+    document.getElementById("result").innerHTML =
+        `✅ Uploaded!<br>File ID:<br><b>${data.file_id}</b>`;
+}
+
+async function downloadFile() {
+    const file_id = document.getElementById("fileIdInput").value;
+
+    if (!file_id) {
+        alert("Enter file_id!");
+        return;
+    }
+
+    document.getElementById("result").innerHTML = "Fetching link... 🔗";
+
+    const res = await fetch(`${API_BASE}/download?file_id=${file_id}`);
+    const data = await res.json();
+
+    document.getElementById("result").innerHTML =
+        `<a href="${data.downloadURL}" target="_blank">📥 Download File</a>`;
+}
+</script>
+
+</body>
+</html>
